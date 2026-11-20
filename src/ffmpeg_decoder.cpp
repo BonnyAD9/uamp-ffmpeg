@@ -1,6 +1,7 @@
 #include "ffmpeg_decoder.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 
 #include <libavutil/rational.h>
@@ -120,7 +121,9 @@ double FfmpegDecoder::get_length() {
 
 void FfmpegDecoder::read_frames(std::span<char> buf, std::size_t &written) {
     while (buf.size() > written && _avctx.receive_frame(_frame)) {
-        _pos = _frame->pts;
+        if (_frame->pts != AV_NOPTS_VALUE) {
+            _pos = _frame->pts;
+        }
         read_frame(buf, written);
     }
 }

@@ -13,6 +13,9 @@ static inline double dur_to_secs(Duration dur) {
 }
 
 static inline Duration secs_to_dur(double secs) {
+    if (secs < 0) {
+        return { .secs = 0, .nanos = 0 };
+    }
     auto s = std::floor(secs);
     auto f = secs - s;
     return {

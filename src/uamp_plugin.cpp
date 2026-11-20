@@ -61,7 +61,7 @@ struct State {
 
 static constexpr DecoderPluginFlags operator|(
     DecoderPluginFlags l, DecoderPluginFlags r
-) {
+) noexcept {
     return DecoderPluginFlags(std::uint32_t(l) | std::uint32_t(r));
 }
 
