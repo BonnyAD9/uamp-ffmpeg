@@ -9,18 +9,19 @@ namespace ufd {
 constexpr double NS_IN_S = 1'000'000'000;
 
 static inline double dur_to_secs(Duration dur) {
-    return double(dur.secs) + double(dur.nanos) / NS_IN_S;
+    return static_cast<double>(dur.secs) +
+           static_cast<double>(dur.nanos) / NS_IN_S;
 }
 
 static inline Duration secs_to_dur(double secs) {
     if (secs < 0) {
         return { .secs = 0, .nanos = 0 };
     }
-    auto s = std::floor(secs);
-    auto f = secs - s;
+    const auto s = std::floor(secs);
+    const auto f = secs - s;
     return {
-        .secs = std::uint64_t(s),
-        .nanos = std::uint32_t(f * NS_IN_S),
+        .secs = static_cast<std::uint64_t>(s),
+        .nanos = static_cast<std::uint32_t>(f * NS_IN_S),
     };
 }
 

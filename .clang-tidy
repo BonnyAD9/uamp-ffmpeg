@@ -22,7 +22,8 @@ Checks: '
   -readability-qualified-auto,
   -readability-implicit-bool-conversion,
   -readability-named-parameter,
-  -readability-math-missing-parentheses'
+  -readability-math-missing-parentheses,
+  -misc-explicit-constructor'
 FormatStyle: file
 
 CheckOptions:

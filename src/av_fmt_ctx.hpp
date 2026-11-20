@@ -30,7 +30,7 @@ public:
 
     AVFmtCtx(const char *path) {
         AVFormatContext *ps = nullptr;
-        auto res = avformat_open_input(&ps, path, nullptr, nullptr);
+        const auto res = avformat_open_input(&ps, path, nullptr, nullptr);
         _ps = std::unique_ptr<AVFormatContext, del::AVFormatContext>(ps);
         check_av_error(res);
     }
@@ -52,7 +52,7 @@ public:
     }
 
     bool read_frame(AVPacket &pkt) {
-        auto res = av_read_frame(get(), &*pkt);
+        const auto res = av_read_frame(get(), &*pkt);
         if (res == AVERROR_EOF) {
             return false;
         }

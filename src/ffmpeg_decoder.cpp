@@ -1,7 +1,6 @@
 #include "ffmpeg_decoder.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <stdexcept>
 
 #include <libavutil/rational.h>
@@ -22,7 +21,7 @@ namespace ufd {
 
 FfmpegDecoder::FfmpegDecoder(const char *path) : _ps(path) {
     _ps.find_stream_info();
-    _stream = int(_ps.first_audio_stream());
+    _stream = static_cast<int>(_ps.first_audio_stream());
     auto codec =
         avcodec_find_decoder(_ps->streams[_stream]->codecpar->codec_id);
     if (!codec) {
@@ -40,19 +39,19 @@ FfmpegDecoder::FfmpegDecoder(const char *path) : _ps(path) {
 }
 
 void FfmpegDecoder::set_config(const DeviceConfig &conf) {
-    auto sample_rate = int(conf.sample_rate);
+    auto sample_rate = static_cast<int>(conf.sample_rate);
     if (_avctx->sample_rate != sample_rate) {
         _resample = sample_rate;
         throw std::runtime_error("Resampeling is not supported.");
     }
 
-    auto channel_cnt = int(conf.channel_count);
+    auto channel_cnt = static_cast<int>(conf.channel_count);
     if (_avctx->ch_layout.nb_channels != channel_cnt) {
         _rechannel = channel_cnt;
         throw std::runtime_error("Rechanneling is not supported.");
     }
 
-    auto sample_fmt = from_av_sample(_avctx->sample_fmt);
+    const auto sample_fmt = from_av_sample(_avctx->sample_fmt);
     _sample_size = get_sample_size(sample_fmt);
     if (sample_fmt != conf.sample_format) {
         _reformat = conf.sample_format;
@@ -62,8 +61,9 @@ void FfmpegDecoder::set_config(const DeviceConfig &conf) {
 
 DeviceConfig FfmpegDecoder::preferred_config() {
     return {
-        .channel_count = std::uint32_t(_avctx->ch_layout.nb_channels),
-        .sample_rate = std::uint32_t(_avctx->sample_rate),
+        .channel_count =
+            static_cast<std::uint32_t>(_avctx->ch_layout.nb_channels),
+        .sample_rate = static_cast<std::uint32_t>(_avctx->sample_rate),
         .sample_format = from_av_sample(_avctx->sample_fmt),
     };
 }
@@ -103,7 +103,7 @@ void FfmpegDecoder::read(std::span<char> buf, std::size_t &written) {
 
 void FfmpegDecoder::seek(double secs) {
     _pos = av_rescale_q(
-        std::int64_t(secs * AV_TIME_BASE),
+        static_cast<std::int64_t>(secs * AV_TIME_BASE),
         AV_TIME_BASE_Q,
         _ps->streams[_stream]->time_base
     );
@@ -112,11 +112,12 @@ void FfmpegDecoder::seek(double secs) {
 }
 
 double FfmpegDecoder::get_pos() {
-    return double(_pos) * av_q2d(_ps->streams[_stream]->time_base);
+    return static_cast<double>(_pos) *
+           av_q2d(_ps->streams[_stream]->time_base);
 }
 
 double FfmpegDecoder::get_length() {
-    return double(_ps->duration) / AV_TIME_BASE;
+    return static_cast<double>(_ps->duration) / AV_TIME_BASE;
 }
 
 void FfmpegDecoder::read_frames(std::span<char> buf, std::size_t &written) {
@@ -132,17 +133,18 @@ void FfmpegDecoder::read_frame(std::span<char> buf, std::size_t &written) {
     buf = buf.subspan(written);
     auto offset = _frame_continue.value_or(0);
 
-    auto channel_count = std::size_t(_frame->ch_layout.nb_channels);
-    auto sample_count = std::size_t(_frame->nb_samples);
-    auto bps = channel_count * _sample_size;
-    auto frame_buf_len = bps * sample_count;
+    const auto channel_count =
+        static_cast<std::size_t>(_frame->ch_layout.nb_channels);
+    const auto sample_count = static_cast<std::size_t>(_frame->nb_samples);
+    const auto bps = channel_count * _sample_size;
+    const auto frame_buf_len = bps * sample_count;
 
-    auto len = std::min(buf.size(), frame_buf_len - offset);
+    const auto len = std::min(buf.size(), frame_buf_len - offset);
 
     if (_is_interleaved) {
         std::copy_n(_frame->extended_data[0] + offset, len, buf.begin());
         written += len;
-        auto next_byte = offset + len;
+        const auto next_byte = offset + len;
         if (next_byte < frame_buf_len) {
             _frame_continue = offset;
         } else {
@@ -156,7 +158,7 @@ void FfmpegDecoder::read_frame(std::span<char> buf, std::size_t &written) {
             );
         }
 
-        auto bytes_cnt = (offset + len) / channel_count;
+        const auto bytes_cnt = (offset + len) / channel_count;
         std::size_t pos = offset / channel_count;
         for (; pos < bytes_cnt; pos += _sample_size) {
             for (int i = 0; i < _frame->ch_layout.nb_channels; ++i) {

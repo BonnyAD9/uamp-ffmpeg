@@ -46,7 +46,7 @@ public:
     }
 
     bool send_packet(AVPacket &pkt) {
-        auto res = avcodec_send_packet(get(), &*pkt);
+        const auto res = avcodec_send_packet(get(), &*pkt);
         if (res == AVERROR(EAGAIN)) {
             return false;
         }
@@ -57,7 +57,7 @@ public:
     void send_packet() { check_av_error(avcodec_send_packet(get(), nullptr)); }
 
     bool receive_frame(AVFrame &frame) {
-        auto res = avcodec_receive_frame(get(), &*frame);
+        const auto res = avcodec_receive_frame(get(), &*frame);
         if (res == AVERROR_EOF || res == AVERROR(EAGAIN)) {
             return false;
         }

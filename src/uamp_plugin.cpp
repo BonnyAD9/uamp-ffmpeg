@@ -29,6 +29,7 @@ static Error no_error() noexcept {
     };
 }
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 struct State {
     std::vector<std::string> errors;
     std::optional<FfmpegDecoder> decoder;
@@ -37,9 +38,9 @@ struct State {
         if (errors.empty()) {
             return no_error();
         }
-        auto err = errors.rbegin();
+        const auto err = errors.rbegin();
 
-        auto size = err->size();
+        const auto size = err->size();
         // NOLINTNEXTLINE(modernize-avoid-c-arrays)
         auto msg = std::unique_ptr<char[]>(new char[size]);
 
@@ -62,7 +63,9 @@ struct State {
 static constexpr DecoderPluginFlags operator|(
     DecoderPluginFlags l, DecoderPluginFlags r
 ) noexcept {
-    return DecoderPluginFlags(std::uint32_t(l) | std::uint32_t(r));
+    return DecoderPluginFlags(
+        static_cast<std::uint32_t>(l) | static_cast<std::uint32_t>(r)
+    );
 }
 
 extern "C" {
@@ -103,7 +106,7 @@ void *uamp_decoder_open(const char *path, std::size_t path_len) {
 }
 
 void uamp_decoder_free(void *d) {
-    auto *state = reinterpret_cast<ufd::State *>(d);
+    auto state = reinterpret_cast<ufd::State *>(d);
     delete state;
 }
 
@@ -136,7 +139,7 @@ std::size_t uamp_decoder_read(
 ) {
     auto *state = reinterpret_cast<ufd::State *>(d);
     std::size_t written = 0;
-    auto sample_size = ufd::get_sample_size(fmt);
+    const auto sample_size = ufd::get_sample_size(fmt);
     try {
         try {
             if (!state || !state->decoder) {
@@ -242,8 +245,8 @@ Timestamp uamp_decoder_seek_by(void *d, Duration time, bool forward) {
                 );
             }
             auto pos = state->decoder->get_pos();
-            auto len = state->decoder->get_length();
-            auto chn = ufd::dur_to_secs(time);
+            const auto len = state->decoder->get_length();
+            const auto chn = ufd::dur_to_secs(time);
             pos = std::clamp(forward ? pos + chn : pos - chn, 0., len);
             state->decoder->seek(pos);
             res.current = ufd::secs_to_dur(state->decoder->get_pos());
